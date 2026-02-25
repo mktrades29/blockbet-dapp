@@ -22,7 +22,6 @@ interface BettingPanelProps {
   onWithdraw:         () => Promise<void>;
   onStartNewRound:    () => Promise<void>;
   onConnect:          () => void;
-  chainHeight:        number;
 }
 
 const PRESET_AMOUNTS = ['0.0001', '0.0005', '0.001', '0.005'];
@@ -45,7 +44,6 @@ export default function BettingPanel({
   onWithdraw,
   onStartNewRound,
   onConnect,
-  chainHeight,
 }: BettingPanelProps) {
   const [amount,   setAmount]   = useState('0.0001');
   const [selected, setSelected] = useState<BetSide | null>(null);

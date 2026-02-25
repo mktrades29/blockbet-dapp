@@ -63,8 +63,6 @@ export default function App() {
     }
   }
 
-  const chainHeight = chainTip?.height ?? 0;
-
   return (
     <div className="flex min-h-screen flex-col bg-dark-900">
       <Header
@@ -154,7 +152,7 @@ export default function App() {
               isStartingNewRound={isStartingNewRound}
               txError={txError}
               lastTxId={lastTxId}
-              chainHeight={chainHeight}
+
               onBet={placeBet}
               onSettle={settle}
               onClaim={claim}

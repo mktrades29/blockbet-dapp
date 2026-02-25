@@ -54,7 +54,8 @@ export default function BettingPanel({
   // Use currentBlock from the OP_NET node (returned by getRoundInfo) — not the
   // mempool.space mainnet height, which would be ~880 000 vs regtest's ~100.
   const currentBlock = roundInfo ? Number(roundInfo.currentBlock) : null;
-  const bettingOpen  = !settled && targetBlock !== null && currentBlock !== null && currentBlock < targetBlock;
+  // Show betting UI by default when round info isn't loaded yet (null = unknown state).
+  const bettingOpen  = !settled && (roundInfo === null || (targetBlock !== null && currentBlock !== null && currentBlock < targetBlock));
   const awaitSettle  = !settled && targetBlock !== null && currentBlock !== null && currentBlock >= targetBlock;
   const winnerSide  = roundInfo?.winnerSide ?? 0;
 

@@ -10,7 +10,7 @@ import type { OPWalletInteractionResult } from '../types/opwallet';
 // ─── Contract address ─────────────────────────────────────────────────────────
 export const BLOCKBET_CONTRACT_ADDRESS =
   (import.meta.env.VITE_CONTRACT_ADDRESS as string) ||
-  'opr1sqqpdz9urfrdcvy8uz74zp9f6ljjzlmn8v5pvf5ts';
+  'opr1sqqrgl4fwkxgtgdjg96t49wwwekl2fz6gacrgnall';
 
 // ─── OP_NET node URL (for contract reads via JSON-RPC) ───────────────────────
 // Set VITE_OPNET_NODE_URL in Vercel environment variables to override.

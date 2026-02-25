@@ -260,7 +260,11 @@ export async function contractRead(
     id:      1,
   };
 
-  const res = await fetch(OPNET_NODE_URL, {
+  const rpcUrl = OPNET_NODE_URL.includes('/api/v1/json-rpc')
+    ? OPNET_NODE_URL
+    : `${OPNET_NODE_URL.replace(/\/$/, '')}/api/v1/json-rpc`;
+
+  const res = await fetch(rpcUrl, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(payload),
@@ -269,7 +273,7 @@ export async function contractRead(
   if (!res.ok) {
     throw new Error(
       `OP_NET node error ${res.status}: ${res.statusText}. ` +
-      `Node: ${OPNET_NODE_URL} — set VITE_OPNET_NODE_URL in Vercel env vars.`,
+      `Node: ${rpcUrl} — set VITE_OPNET_NODE_URL in Vercel env vars.`,
     );
   }
 

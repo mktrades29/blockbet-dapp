@@ -1,5 +1,7 @@
-import { AlertTriangle, Github, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Github, RefreshCw, Settings } from 'lucide-react';
+import { useState } from 'react';
 import { useBlockBet } from './hooks/useBlockBet';
+import { toHex } from './utils/opnet';
 import Header        from './components/Header';
 import BlockCountdown from './components/BlockCountdown';
 import PoolDisplay   from './components/PoolDisplay';
@@ -9,6 +11,7 @@ export default function App() {
   const {
     // State
     account,
+    opnetAddress,
     isConnecting,
     walletError,
     roundInfo,
@@ -32,8 +35,28 @@ export default function App() {
     claim,
     withdraw,
     startNewRound,
+    setTreasury,
     refreshRoundInfo,
   } = useBlockBet();
+
+  const [treasuryTx,  setTreasuryTx]  = useState<string | null>(null);
+  const [treasuryErr, setTreasuryErr] = useState<string | null>(null);
+  const [settingTreasury, setSettingTreasury] = useState(false);
+
+  async function handleSetTreasury() {
+    if (!opnetAddress) return;
+    setSettingTreasury(true);
+    setTreasuryErr(null);
+    setTreasuryTx(null);
+    try {
+      await setTreasury(opnetAddress);
+      setTreasuryTx('Treasury updated to your address!');
+    } catch (err: unknown) {
+      setTreasuryErr(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSettingTreasury(false);
+    }
+  }
 
   const chainHeight = chainTip?.height ?? 0;
 
@@ -136,6 +159,50 @@ export default function App() {
             />
           </div>
         </div>
+
+        {/* ── Treasury / Admin (only when wallet connected) ── */}
+        {account && opnetAddress && (
+          <section className="mt-10">
+            <div className="divider-glow mb-6" />
+            <div className="mx-auto max-w-lg card-glow p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Settings className="h-4 w-4 text-btc-orange" />
+                <span className="text-sm font-semibold uppercase tracking-widest text-gray-500">
+                  House Fee Treasury
+                </span>
+              </div>
+              <p className="mb-1 text-xs text-gray-500">
+                Your OP_NET address (receives the 2% house fee):
+              </p>
+              <p className="mb-4 break-all font-mono text-xs text-gray-300 rounded-lg bg-dark-800 border border-dark-500 px-3 py-2">
+                {toHex(opnetAddress)}
+              </p>
+              <p className="mb-3 text-xs text-gray-600">
+                The treasury was set to the deployer address at deployment. Click below to confirm
+                it is pointing to your current wallet.
+              </p>
+              <button
+                onClick={handleSetTreasury}
+                disabled={settingTreasury}
+                className="w-full rounded-xl border border-btc-orange/40 bg-btc-orange/10 py-2.5
+                           text-sm font-semibold text-btc-orange hover:bg-btc-orange/20
+                           transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {settingTreasury ? (
+                  <><RefreshCw className="h-4 w-4 animate-spin" /> Setting treasury…</>
+                ) : (
+                  <><Settings className="h-4 w-4" /> Set Treasury to My Address</>
+                )}
+              </button>
+              {treasuryTx && (
+                <p className="mt-2 text-center text-xs text-neon-green">{treasuryTx}</p>
+              )}
+              {treasuryErr && (
+                <p className="mt-2 text-center text-xs text-red-400">{treasuryErr}</p>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* How it works */}
         <section className="mt-12">

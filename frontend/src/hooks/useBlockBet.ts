@@ -31,6 +31,7 @@ export type BetSide = 'even' | 'odd';
 export interface BlockBetState {
   // Wallet
   account:        OPWalletAccount | null;
+  opnetAddress:   Uint8Array | null;
   isConnecting:   boolean;
   walletError:    string | null;
 
@@ -64,6 +65,7 @@ export interface BlockBetActions {
   claim:            () => Promise<void>;
   withdraw:         () => Promise<void>;
   startNewRound:    () => Promise<void>;
+  setTreasury:      (addressBytes: Uint8Array) => Promise<void>;
   refreshRoundInfo: () => Promise<void>;
 }
 
@@ -339,6 +341,21 @@ export function useBlockBet(): BlockBetState & BlockBetActions {
     }
   }, [account, opnetAddress, refreshBetInfo]);
 
+  // ── Set treasury ────────────────────────────────────────────────────────────
+
+  const setTreasury = useCallback(async (addressBytes: Uint8Array) => {
+    if (!account) throw new Error('Wallet not connected');
+    setTxError(null);
+    try {
+      const result = await contractCall(SELECTORS.setTreasury, [encodeOpnetAddress(addressBytes)], 0);
+      setLastTxId(result.txid);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setTxError(msg);
+      throw err;
+    }
+  }, [account]);
+
   // ── Start new round ─────────────────────────────────────────────────────────
 
   const startNewRound = useCallback(async () => {
@@ -361,6 +378,7 @@ export function useBlockBet(): BlockBetState & BlockBetActions {
   return {
     // State
     account,
+    opnetAddress,
     isConnecting,
     walletError,
     roundInfo,
@@ -384,6 +402,7 @@ export function useBlockBet(): BlockBetState & BlockBetActions {
     claim,
     withdraw,
     startNewRound,
+    setTreasury,
     refreshRoundInfo,
   };
 }

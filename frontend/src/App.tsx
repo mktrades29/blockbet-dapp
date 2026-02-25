@@ -7,6 +7,11 @@ import BlockCountdown from './components/BlockCountdown';
 import PoolDisplay   from './components/PoolDisplay';
 import BettingPanel  from './components/BettingPanel';
 
+// Deployer's OP_NET address — only this wallet sees the treasury admin panel.
+// Set VITE_DEPLOYER_ADDRESS in Vercel environment variables.
+const DEPLOYER_OPNET_ADDRESS =
+  (import.meta.env.VITE_DEPLOYER_ADDRESS as string) || '';
+
 export default function App() {
   const {
     // State
@@ -160,8 +165,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Treasury / Admin (only when wallet connected) ── */}
-        {account && opnetAddress && (
+        {/* ── Treasury / Admin (deployer only) ── */}
+        {account && opnetAddress && toHex(opnetAddress) === DEPLOYER_OPNET_ADDRESS && (
           <section className="mt-10">
             <div className="divider-glow mb-6" />
             <div className="mx-auto max-w-lg card-glow p-5">

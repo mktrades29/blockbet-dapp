@@ -260,21 +260,15 @@ export async function contractRead(
     id:      1,
   };
 
-  const rpcUrl = OPNET_NODE_URL.includes('/api/v1/json-rpc')
-    ? OPNET_NODE_URL
-    : `${OPNET_NODE_URL.replace(/\/$/, '')}/api/v1/json-rpc`;
-
-  const res = await fetch(rpcUrl, {
+  // Route through the Vercel edge proxy (/api/opnet) to avoid browser CORS issues.
+  const res = await fetch('/api/opnet', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(payload),
   });
 
   if (!res.ok) {
-    throw new Error(
-      `OP_NET node error ${res.status}: ${res.statusText}. ` +
-      `Node: ${rpcUrl} — set VITE_OPNET_NODE_URL in Vercel env vars.`,
-    );
+    throw new Error(`OP_NET proxy error ${res.status}: ${res.statusText}`);
   }
 
   type RpcResponse = {

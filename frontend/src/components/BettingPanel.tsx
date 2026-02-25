@@ -51,10 +51,13 @@ export default function BettingPanel({
   const [selected, setSelected] = useState<BetSide | null>(null);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
-  const settled     = roundInfo?.settled ?? false;
-  const targetBlock = roundInfo ? Number(roundInfo.targetBlock) : null;
-  const bettingOpen = !settled && targetBlock !== null && chainHeight < targetBlock;
-  const awaitSettle = !settled && targetBlock !== null && chainHeight >= targetBlock;
+  const settled      = roundInfo?.settled ?? false;
+  const targetBlock  = roundInfo ? Number(roundInfo.targetBlock)  : null;
+  // Use currentBlock from the OP_NET node (returned by getRoundInfo) — not the
+  // mempool.space mainnet height, which would be ~880 000 vs regtest's ~100.
+  const currentBlock = roundInfo ? Number(roundInfo.currentBlock) : null;
+  const bettingOpen  = !settled && targetBlock !== null && currentBlock !== null && currentBlock < targetBlock;
+  const awaitSettle  = !settled && targetBlock !== null && currentBlock !== null && currentBlock >= targetBlock;
   const winnerSide  = roundInfo?.winnerSide ?? 0;
 
   const hasWinningBet = betInfo && (

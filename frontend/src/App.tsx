@@ -46,21 +46,27 @@ export default function App() {
         onDisconnect={disconnectWallet}
       />
 
-      {/* OPWallet not detected banner */}
-      {walletError && walletError.includes('OPWallet not found') && (
+      {/* Wallet error banner */}
+      {walletError && (
         <div className="border-b border-amber-500/20 bg-amber-500/5 px-4 py-3 text-center text-sm">
           <AlertTriangle className="mr-2 inline h-4 w-4 text-amber-400" />
           <span className="text-amber-300">
-            OPWallet not detected.{' '}
-            <a
-              href="https://opwallet.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-white transition-colors"
-            >
-              Install OPWallet
-            </a>{' '}
-            to place bets.
+            {walletError.includes('not detected') ? (
+              <>
+                OPWallet not detected.{' '}
+                <a
+                  href="https://opwallet.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-white transition-colors"
+                >
+                  Install OPWallet
+                </a>{' '}
+                to place bets.
+              </>
+            ) : (
+              walletError
+            )}
           </span>
         </div>
       )}

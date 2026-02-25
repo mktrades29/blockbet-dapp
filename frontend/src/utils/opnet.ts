@@ -5,12 +5,19 @@
  * and wraps OPWallet provider calls.
  */
 
-import type { OPWalletCallResult, OPWalletReadResult } from '../types/opwallet';
+import type { OPWalletInteractionResult } from '../types/opwallet';
 
 // ─── Contract address ─────────────────────────────────────────────────────────
 export const BLOCKBET_CONTRACT_ADDRESS =
   (import.meta.env.VITE_CONTRACT_ADDRESS as string) ||
   'opr1sqqpdz9urfrdcvy8uz74zp9f6ljjzlmn8v5pvf5ts';
+
+// ─── OP_NET node URL (for contract reads via JSON-RPC) ───────────────────────
+// Set VITE_OPNET_NODE_URL in Vercel environment variables to override.
+// Mainnet:  https://mainnet.opnet.org  (default)
+// Regtest:  https://regtest.opnet.org
+export const OPNET_NODE_URL =
+  (import.meta.env.VITE_OPNET_NODE_URL as string) || 'https://mainnet.opnet.org';
 
 // ─── Method selectors ─────────────────────────────────────────────────────────
 // Signatures must exactly match the contract's encodeSelector() calls.
@@ -210,7 +217,7 @@ export function decodePendingWithdrawal(hexData: string): bigint {
 
 function getWallet() {
   if (!window.opnet) {
-    throw new Error('OPWallet not found. Please install the OPWallet browser extension.');
+    throw new Error('OPWallet extension not detected. Please install it from https://opwallet.io');
   }
   return window.opnet;
 }
@@ -220,27 +227,73 @@ export async function contractCall(
   methodSig: string,
   args: Uint8Array[],
   valueSats: number,
-): Promise<OPWalletCallResult> {
+): Promise<OPWalletInteractionResult> {
   const wallet   = getWallet();
   const calldata = buildCalldata(methodSig, ...args);
-  return wallet.call({
-    to:       BLOCKBET_CONTRACT_ADDRESS,
+  // The wallet calls calldata.toString("hex") internally;
+  // passing a hex string is fine since string.toString() is identity.
+  return wallet.signAndBroadcastInteraction({
+    to:    BLOCKBET_CONTRACT_ADDRESS,
     calldata,
-    value:    valueSats,
+    value: valueSats,
   });
 }
 
-/** Read from the BlockBet contract (no broadcast). */
+/**
+ * Read from the BlockBet contract via the OP_NET node JSON-RPC API.
+ * No wallet required — reads are unauthenticated.
+ *
+ * Uses the `btc_call` JSON-RPC method (OP_NET protocol).
+ * Configure the node with VITE_OPNET_NODE_URL in Vercel environment variables.
+ */
 export async function contractRead(
   methodSig: string,
   args: Uint8Array[] = [],
-): Promise<OPWalletReadResult> {
-  const wallet   = getWallet();
+): Promise<{ data: string }> {
   const calldata = buildCalldata(methodSig, ...args);
-  return wallet.read({
-    to:       BLOCKBET_CONTRACT_ADDRESS,
-    calldata,
+
+  // btc_call params: [to, data, from?, fromLegacy?, height?, simulatedTx?, accessList?]
+  const payload = {
+    jsonrpc: '2.0',
+    method:  'btc_call',
+    params:  [BLOCKBET_CONTRACT_ADDRESS, calldata],
+    id:      1,
+  };
+
+  const res = await fetch(OPNET_NODE_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
   });
+
+  if (!res.ok) {
+    throw new Error(
+      `OP_NET node error ${res.status}: ${res.statusText}. ` +
+      `Node: ${OPNET_NODE_URL} — set VITE_OPNET_NODE_URL in Vercel env vars.`,
+    );
+  }
+
+  type RpcResponse = {
+    result?: { result?: string; data?: string } | string;
+    error?:  { message: string; code?: number } | string;
+  };
+  const json = await res.json() as RpcResponse;
+
+  if (json.error) {
+    const msg = typeof json.error === 'string' ? json.error : json.error.message;
+    throw new Error(`btc_call error: ${msg}`);
+  }
+
+  // Normalise: result can be a plain hex string or { result: hex, ... }
+  let data = '';
+  if (typeof json.result === 'string') {
+    data = json.result;
+  } else if (json.result) {
+    data = json.result.result ?? json.result.data ?? '';
+  }
+  if (data.startsWith('0x')) data = data.slice(2);
+
+  return { data };
 }
 
 // ─── Mempool.space helpers ─────────────────────────────────────────────────────

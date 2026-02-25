@@ -118,8 +118,18 @@ export function useBlockBet(): BlockBetState & BlockBetActions {
       if (!window.opnet) {
         throw new Error('OPWallet extension not detected. Please install it from https://opwallet.io');
       }
-      const acc = await window.opnet.connect();
-      setAccount(acc);
+      // requestAccounts() returns string[] of addresses; getPublicKey() is a separate call.
+      const [addresses, publicKey] = await Promise.all([
+        window.opnet.requestAccounts(),
+        window.opnet.getPublicKey(),
+      ]);
+      if (!addresses.length) throw new Error('No accounts returned from wallet');
+      const address = addresses[0];
+      const addressType =
+        address.startsWith('bc1p') || address.startsWith('bcrt1p') ? 'p2tr' :
+        address.startsWith('bc1q') || address.startsWith('bcrt1q') ? 'p2wpkh' :
+        'p2pkh';
+      setAccount({ address, publicKey, addressType });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setWalletError(msg);
@@ -140,29 +150,36 @@ export function useBlockBet(): BlockBetState & BlockBetActions {
     const wallet = window.opnet;
     if (!wallet) return;
 
-    const onAccountsChanged = (acc: OPWalletAccount | null) => setAccount(acc);
-    const onDisconnect      = () => {
+    const onDisconnect = () => {
       setAccount(null);
       setOpnetAddress(null);
       setBetInfo(null);
       setPendingWithdrawal(0n);
     };
 
-    wallet.on('accountsChanged', onAccountsChanged);
     wallet.on('disconnect', onDisconnect);
 
-    wallet.getAccount().then((acc) => { if (acc) setAccount(acc); }).catch(() => {});
+    // Restore session if wallet was already connected
+    wallet.getAccounts().then((addresses) => {
+      if (!addresses?.length) return;
+      wallet.getPublicKey().then((publicKey) => {
+        const address = addresses[0];
+        const addressType =
+          address.startsWith('bc1p') || address.startsWith('bcrt1p') ? 'p2tr' :
+          address.startsWith('bc1q') || address.startsWith('bcrt1q') ? 'p2wpkh' :
+          'p2pkh';
+        setAccount({ address, publicKey, addressType });
+      }).catch(console.warn);
+    }).catch(() => {});
 
     return () => {
-      wallet.off('accountsChanged', onAccountsChanged as never);
-      wallet.off('disconnect',      onDisconnect as never);
+      wallet.off('disconnect', onDisconnect as never);
     };
   }, []);
 
   // ── Round data fetching ─────────────────────────────────────────────────────
 
   const refreshRoundInfo = useCallback(async () => {
-    if (!window.opnet) return;
     setIsLoadingRound(true);
     try {
       const res = await contractRead(SELECTORS.getRoundInfo);
@@ -175,7 +192,6 @@ export function useBlockBet(): BlockBetState & BlockBetActions {
   }, []);
 
   const refreshBetInfo = useCallback(async (addr: Uint8Array) => {
-    if (!window.opnet) return;
     try {
       const addrArg = encodeOpnetAddress(addr);
       const [betRes, withdrawRes] = await Promise.all([

@@ -2,7 +2,7 @@
  * TypeScript ambient declarations for the OPWallet browser extension.
  * OPWallet injects `window.opnet` into the browser context.
  *
- * Docs: https://docs.opnet.org/wallet
+ * Actual API discovered by inspecting window.opnet at runtime.
  */
 
 export interface OPWalletAccount {
@@ -14,70 +14,71 @@ export interface OPWalletAccount {
   addressType: string;
 }
 
-export interface OPWalletCallParams {
+export interface OPWalletInteractionParams {
   /** OP_NET contract address */
   to: string;
-  /** ABI-encoded calldata (hex string, no 0x prefix) */
+  /**
+   * ABI-encoded calldata.
+   * The wallet calls `.toString("hex")` on this value internally,
+   * so a plain hex string works (string.toString() is identity).
+   */
   calldata: string;
   /** Satoshis to attach to the transaction */
   value?: number;
-  /** Optional gas / fee rate in sat/vbyte */
-  feeRate?: number;
 }
 
-export interface OPWalletCallResult {
+export interface OPWalletInteractionResult {
   /** Transaction ID (txid) */
   txid: string;
-  /** Raw signed transaction hex */
-  hex: string;
-}
-
-export interface OPWalletReadParams {
-  /** OP_NET contract address */
-  to: string;
-  /** ABI-encoded calldata (hex string) */
-  calldata: string;
-}
-
-export interface OPWalletReadResult {
-  /** ABI-encoded return data (hex string) */
-  data: string;
+  /** Raw signed transaction hex (optional) */
+  hex?: string;
 }
 
 export interface OPWalletProvider {
   /**
-   * Request wallet connection.
-   * Prompts the user to approve connection and returns their account.
+   * Request wallet connection (shows browser popup).
+   * Returns array of Bitcoin addresses.
    */
-  connect(): Promise<OPWalletAccount>;
+  requestAccounts(): Promise<string[]>;
+
+  /**
+   * Get currently connected addresses without prompting.
+   * Returns [] if not connected.
+   */
+  getAccounts(): Promise<string[]>;
+
+  /**
+   * Get the compressed public key of the active account (33-byte hex).
+   */
+  getPublicKey(): Promise<string>;
 
   /**
    * Disconnect the current session.
    */
   disconnect(): Promise<void>;
 
-  /**
-   * Get the currently connected account (null if not connected).
-   */
-  getAccount(): Promise<OPWalletAccount | null>;
+  /** Get current network info. */
+  getNetwork(): Promise<Record<string, unknown>>;
+
+  /** Get current chain info. */
+  getChain(): Promise<Record<string, unknown>>;
 
   /**
-   * Send a state-changing transaction to an OP_NET contract.
+   * Sign and broadcast a state-changing contract interaction.
+   * Internally calls queryContractInformation(to) then _request().
    */
-  call(params: OPWalletCallParams): Promise<OPWalletCallResult>;
+  signAndBroadcastInteraction(
+    params: OPWalletInteractionParams,
+  ): Promise<OPWalletInteractionResult>;
 
   /**
-   * Read contract state without broadcasting a transaction.
+   * Sign a contract interaction without broadcasting.
    */
-  read(params: OPWalletReadParams): Promise<OPWalletReadResult>;
+  signInteraction(params: OPWalletInteractionParams): Promise<unknown>;
 
-  /**
-   * Subscribe to wallet events.
-   */
-  on(event: 'accountsChanged', handler: (account: OPWalletAccount | null) => void): void;
-  on(event: 'disconnect', handler: () => void): void;
-  on(event: 'chainChanged', handler: (chainId: string) => void): void;
-
+  /** EventEmitter: subscribe to wallet events. */
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  /** EventEmitter: unsubscribe from wallet events. */
   off(event: string, handler: (...args: unknown[]) => void): void;
 }
 

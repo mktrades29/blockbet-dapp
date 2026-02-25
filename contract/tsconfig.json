@@ -1,0 +1,18 @@
+{
+  "extends": "assemblyscript/std/assembly.json",
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "compilerOptions": {
+    "target": "ESNext",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "paths": {
+      "@btc-vision/btc-runtime/runtime": [
+        "node_modules/@btc-vision/btc-runtime/src/runtime/index.ts"
+      ]
+    }
+  }
+}

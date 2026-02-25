@@ -1,0 +1,27 @@
+{
+  "targets": {
+    "release": {
+      "outFile": "build/BlockBet.wasm",
+      "textFile": "build/BlockBet.wat",
+      "sourceMap": false,
+      "optimizeLevel": 3,
+      "shrinkLevel": 1,
+      "converge": false,
+      "noAssert": true
+    },
+    "debug": {
+      "outFile": "build/BlockBet.debug.wasm",
+      "textFile": "build/BlockBet.debug.wat",
+      "sourceMap": true,
+      "debug": true,
+      "optimizeLevel": 0
+    }
+  },
+  "options": {
+    "runtime": "stub",
+    "exportRuntime": false,
+    "lib": [
+      "node_modules/@btc-vision/btc-runtime/runtime"
+    ]
+  }
+}

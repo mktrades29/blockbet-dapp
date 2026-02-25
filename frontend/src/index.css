@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-dark-900 text-white font-display;
+    background-image:
+      linear-gradient(rgba(247, 147, 26, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247, 147, 26, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Glowing card */
+  .card-glow {
+    @apply relative overflow-hidden rounded-2xl border border-dark-500 bg-dark-800;
+    box-shadow:
+      0 0 0 1px rgba(247, 147, 26, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .card-glow::before {
+    content: '';
+    @apply absolute inset-0 rounded-2xl pointer-events-none;
+    background: radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      rgba(247, 147, 26, 0.06) 0%,
+      transparent 60%
+    );
+  }
+
+  /* Primary BTC button */
+  .btn-btc {
+    @apply relative inline-flex items-center justify-center gap-2
+           rounded-xl font-bold text-black transition-all duration-200
+           active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #F7931A 0%, #FFB347 100%);
+    box-shadow:
+      0 4px 15px rgba(247, 147, 26, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .btn-btc:hover:not(:disabled) {
+    box-shadow:
+      0 6px 25px rgba(247, 147, 26, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* EVEN bet button */
+  .btn-even {
+    @apply relative inline-flex items-center justify-center gap-2
+           rounded-xl font-black text-white transition-all duration-200
+           active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #00CC6A 0%, #00FF88 100%);
+    box-shadow:
+      0 4px 20px rgba(0, 255, 136, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn-even:hover:not(:disabled) {
+    box-shadow:
+      0 6px 35px rgba(0, 255, 136, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* ODD bet button */
+  .btn-odd {
+    @apply relative inline-flex items-center justify-center gap-2
+           rounded-xl font-black text-white transition-all duration-200
+           active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #CC0000 0%, #FF4D4D 100%);
+    box-shadow:
+      0 4px 20px rgba(255, 77, 77, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn-odd:hover:not(:disabled) {
+    box-shadow:
+      0 6px 35px rgba(255, 77, 77, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* Mono number display */
+  .mono-display {
+    @apply font-mono tracking-wider tabular-nums;
+  }
+
+  /* Neon text effect */
+  .text-neon-green {
+    color: #00FF88;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.6), 0 0 20px rgba(0, 255, 136, 0.3);
+  }
+
+  .text-neon-red {
+    color: #FF4D4D;
+    text-shadow: 0 0 8px rgba(255, 77, 77, 0.6), 0 0 20px rgba(255, 77, 77, 0.3);
+  }
+
+  .text-neon-orange {
+    color: #F7931A;
+    text-shadow: 0 0 8px rgba(247, 147, 26, 0.6), 0 0 20px rgba(247, 147, 26, 0.3);
+  }
+
+  /* Divider with gradient */
+  .divider-glow {
+    @apply h-px w-full;
+    background: linear-gradient(90deg, transparent, rgba(247, 147, 26, 0.3), transparent);
+  }
+
+  /* Status badge */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  .badge-open {
+    @apply badge bg-neon-green/10 text-neon-green border border-neon-green/20;
+  }
+
+  .badge-pending {
+    @apply badge bg-btc-orange/10 text-btc-orange border border-btc-orange/20;
+  }
+
+  .badge-settled {
+    @apply badge bg-dark-500 text-gray-400 border border-dark-400;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar styling */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-dark-800;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-dark-500 rounded-full;
+  }
+}

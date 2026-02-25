@@ -23,12 +23,26 @@ export default async function handler(
     return;
   }
 
+  // Health-check: GET /api/opnet returns the upstream URL
+  if (req.method === 'GET') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const envUrl2 = (globalThis as any).process?.env?.VITE_OPNET_NODE_URL as string | undefined;
+    const b = (envUrl2 ?? 'https://regtest.opnet.org').replace(/\/$/, '');
+    const u = b.includes('/api/v1/json-rpc') ? b : `${b}/api/v1/json-rpc`;
+    res.status(200).json({ ok: true, upstream: u });
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
-  const base   = (process.env.VITE_OPNET_NODE_URL ?? 'https://regtest.opnet.org').replace(/\/$/, '');
+  // Access env via globalThis to avoid TypeScript "process not found" when
+  // the tsconfig only includes "vite/client" types.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const envUrl = (globalThis as any).process?.env?.VITE_OPNET_NODE_URL as string | undefined;
+  const base   = (envUrl ?? 'https://regtest.opnet.org').replace(/\/$/, '');
   const rpcUrl = base.includes('/api/v1/json-rpc') ? base : `${base}/api/v1/json-rpc`;
 
   try {

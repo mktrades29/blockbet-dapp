@@ -260,8 +260,13 @@ export async function contractRead(
     id:      1,
   };
 
-  // Route through the Vercel edge proxy (/api/opnet) to avoid browser CORS issues.
-  const res = await fetch('/api/opnet', {
+  // regtest.opnet.org returns Access-Control-Allow-Origin: * so the browser
+  // can call it directly. The Vercel proxy only blocked cloud IPs.
+  const rpcUrl = OPNET_NODE_URL.includes('/api/v1/json-rpc')
+    ? OPNET_NODE_URL
+    : `${OPNET_NODE_URL}/api/v1/json-rpc`;
+
+  const res = await fetch(rpcUrl, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(payload),
@@ -270,7 +275,7 @@ export async function contractRead(
   if (!res.ok) {
     let detail = res.statusText;
     try { const j = await res.clone().json() as { error?: string }; if (j.error) detail = j.error; } catch { /* ignore */ }
-    throw new Error(`OP_NET proxy ${res.status}: ${detail}`);
+    throw new Error(`OP_NET node ${res.status}: ${detail}`);
   }
 
   type RpcResponse = {
@@ -281,7 +286,7 @@ export async function contractRead(
 
   if (json.error) {
     const msg = typeof json.error === 'string' ? json.error : json.error.message;
-    throw new Error(`btc_call error: ${msg}`);
+    throw new Error(`OP_NET error: ${msg}`);
   }
 
   // Normalise: result can be a plain hex string or { result: hex, ... }

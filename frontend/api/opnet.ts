@@ -34,9 +34,12 @@ export default async function handler(req: Request): Promise<Response> {
       status:  upstream.status,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (err) {
+  } catch (err: unknown) {
+    const detail = err instanceof Error
+      ? `${err.name}: ${err.message}`
+      : String(err);
     return new Response(
-      JSON.stringify({ error: `Proxy error: ${String(err)}. Node: ${rpcUrl}` }),
+      JSON.stringify({ error: `Proxy could not reach ${rpcUrl} — ${detail}` }),
       { status: 502, headers: { 'Content-Type': 'application/json' } },
     );
   }

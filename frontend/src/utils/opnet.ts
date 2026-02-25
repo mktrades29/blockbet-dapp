@@ -268,7 +268,9 @@ export async function contractRead(
   });
 
   if (!res.ok) {
-    throw new Error(`OP_NET proxy error ${res.status}: ${res.statusText}`);
+    let detail = res.statusText;
+    try { const j = await res.clone().json() as { error?: string }; if (j.error) detail = j.error; } catch { /* ignore */ }
+    throw new Error(`OP_NET proxy ${res.status}: ${detail}`);
   }
 
   type RpcResponse = {
